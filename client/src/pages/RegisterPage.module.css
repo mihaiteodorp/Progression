@@ -1,0 +1,162 @@
+
+
+.registerPage {
+    min-height: 100%;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+
+}
+
+.registerCard {
+    width: 100%;
+    max-width: 460px;
+    padding:36px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    
+}
+
+.heading {
+    margin-bottom: 28px;
+}
+
+.heading h1 {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.15;
+    font-weight: 700;
+    color: #111827;
+
+}
+
+.heading p {
+    margin: 8px 0 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #6b7280;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.field input {
+    width: 100%;
+    height: 46px;
+    padding-inline: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background-color: white;
+    font:inherit;
+    font-size: 15px;
+    color: #111827;
+    outline: none;
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.field input:hover {
+    border-color: #9ca3af;
+
+}
+
+.field input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+
+}
+
+.errorMessage {
+    margin:-4px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #b91c1c;    
+
+}
+
+.submitButton {
+    width:100%;
+    height: 46px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    background-color: #15803d;
+    color: white;
+    font:inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        transform 100ms ease;
+}
+
+.submitButton:hover{
+    background-color: #166534;  
+}
+
+.submitButton:active {
+    transform: translateY(1px);
+}
+
+.submitButton:focus-visible {
+    outline: 3px solid rgba(21, 128, 61, 0.2);  
+    outline-offset: 3px;
+}
+
+.loginPrompt {
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.loginPrompt a {
+    color: #15803d;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.loginPrompt a:hover {
+    text-decoration: underline;
+}
+
+.loginPrompt a:focus-visible {
+    outline: 2px solid rgba(21, 128, 61, 0.2);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+@media (max-width:520px) {
+    .registerPage {
+        padding: 32px 16px;
+    }
+
+    .registerCard {
+        padding: 28px 22px;
+    }
+
+    .heading h1 {
+        font-size: 28px;
+    }
+}

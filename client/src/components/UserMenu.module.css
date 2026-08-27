@@ -1,0 +1,118 @@
+.userMenu {
+    position: relative;
+}
+
+.avatarButton {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+
+    display: grid;
+    place-items: center;
+
+    border: none;
+    border-radius: 50%;
+
+    background-color: #166534;
+    color: white;
+
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.avatarButton:hover {
+    filter: brightness(0.95);
+}
+
+.avatarButton:focus-visible {
+    outline: 3px solid rgba(22, 101, 52, 0.3);
+    outline-offset: 3px;
+}
+
+.initials {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 100;
+
+    width: 240px;
+    padding: 10px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    background-color: white;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.userDetails {
+    padding: 8px 10px 12px;
+}
+
+.userName {
+    margin: 0;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+.userEmail {
+    margin: 4px 0 0;
+
+    font-size: 13px;
+
+    color: #6b7280;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.divider {
+    height: 1px;
+    margin-block: 4px;
+
+    background-color: #e5e7eb;
+}
+
+.menuItem {
+    width: 100%;
+    padding: 10px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: none;
+
+    text-align: left;
+    font: inherit;
+
+    color: #b91c1c;
+
+    cursor: pointer;
+}
+
+.menuItem:hover {
+    background-color: #fef2f2;
+}
+
+.menuItem:focus-visible {
+    outline: 2px solid rgba(185, 28, 28, 0.3);
+    outline-offset: 2px;
+}

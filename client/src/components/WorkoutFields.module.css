@@ -1,0 +1,632 @@
+.card {
+    width: 300px;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    overflow: hidden;
+
+    border: 1px solid #d8dee4;
+    border-radius: 14px;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 4px 14px rgba(15, 23, 42, 0.06);
+
+    transition:
+        height
+        380ms
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        );
+
+    animation:
+        workoutCardEnter
+        300ms
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        )
+        both;
+}
+
+
+/*
+    The padding belongs to the inner
+    content rather than the outer card.
+
+    This lets us measure its true natural
+    content height even while the outer
+    card has an explicit animated height.
+*/
+
+.cardContent {
+    display: grid;
+    gap: 24px;
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    padding: 22px;
+}
+
+
+@keyframes workoutCardEnter {
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+/* HEADER */
+
+.header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding-bottom: 14px;
+
+    border-bottom: 1px solid #eaeef2;
+}
+
+.title {
+    margin: 0;
+
+    color: #1f2328;
+
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.subtitle {
+    color: #8c959f;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    white-space: nowrap;
+}
+
+
+/* GENERAL FIELD STYLES */
+
+.fieldset {
+    min-width: 0;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+}
+
+
+
+.legend, .fieldLabel {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 11px;
+    gap: 6px;
+    color: #1f2328;
+
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.optionalLabel {
+    color: #8c959f;
+    font-size: 12px;
+    font-weight: 500;    
+}
+
+.field {
+    display: grid;
+
+    gap: 9px;
+}
+
+
+/* HIDDEN INPUT */
+
+.hiddenInput {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+/* MUSCLE GROUPS */
+
+.muscleGroupTags {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+.muscleGroupTag {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 34px;
+
+    padding: 7px 12px;
+
+    border: 1px solid #d8dee4;
+    border-radius: 999px;
+
+    background-color: #f6f8fa;
+    color: #424a53;
+
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease,
+        transform 100ms ease;
+}
+
+.muscleGroupTag:hover {
+    border-color: #afb8c1;
+
+    background-color: #eef1f4;
+}
+
+.muscleGroupTag:active {
+    transform: scale(0.97);
+}
+
+.muscleGroupTag:has(
+    .hiddenInput:checked
+) {
+    border-color: #1f883d;
+
+    background-color: #dafbe1;
+    color: #116329;
+
+    font-weight: 600;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(31, 136, 61, 0.08);
+}
+
+.muscleGroupTag:has(
+    .hiddenInput:checked
+):hover {
+    border-color: #1a7f37;
+
+    background-color: #c7f3d2;
+}
+
+.muscleGroupTag:has(
+    .hiddenInput:focus-visible
+) {
+    outline:
+        3px solid
+        rgba(31, 136, 61, 0.18);
+
+    outline-offset: 2px;
+}
+
+
+/* CARDIO */
+
+.cardioFields {
+    display: grid;
+
+    gap: 22px;
+}
+
+
+/* INPUT WITH UNIT */
+
+.inputWithUnit {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    max-width: 190px;
+    height: 44px;
+
+    overflow: hidden;
+
+    border: 1px solid #d8dee4;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.inputWithUnit:hover {
+    border-color: #afb8c1;
+}
+
+.inputWithUnit:focus-within {
+    border-color: #1f883d;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(31, 136, 61, 0.12);
+}
+
+.inputWithUnit input {
+    min-width: 0;
+
+    width: 100%;
+    height: 100%;
+
+    padding: 0 11px;
+
+    border: 0;
+
+    outline: 0;
+
+    background-color: transparent;
+    color: #1f2328;
+
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.inputWithUnit input::placeholder {
+    color: #afb8c1;
+
+    font-weight: 500;
+}
+
+.unit {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+
+    padding: 0 11px;
+
+    border-left: 1px solid #e1e4e8;
+
+    background-color: #f6f8fa;
+    color: #6e7781;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* PACE */
+
+.paceFields {
+    display: flex;
+    align-items: end;
+
+    gap: 9px;
+}
+
+.paceFields label {
+    display: grid;
+
+    gap: 6px;
+}
+
+.paceFields input {
+    width: 72px;
+    height: 44px;
+
+    box-sizing: border-box;
+
+    padding: 0 10px;
+
+    border: 1px solid #d8dee4;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+    color: #1f2328;
+
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+
+    outline: 0;
+
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.paceFields input:hover {
+    border-color: #afb8c1;
+
+    background-color: #f6f8fa;
+}
+
+.paceFields input:focus {
+    border-color: #1f883d;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(31, 136, 61, 0.12);
+}
+
+.paceFields input::placeholder {
+    color: #afb8c1;
+
+    font-weight: 500;
+}
+
+.paceFields label span {
+    color: #6e7781;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.perKm {
+    margin-bottom: 4px;
+
+    color: #6e7781;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* DURATION */
+
+.durationFields {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 14px;
+}
+
+.durationField {
+    display: grid;
+
+    gap: 6px;
+}
+
+.durationField input {
+    width: 92px;
+    height: 44px;
+
+    box-sizing: border-box;
+
+    padding: 0 10px;
+
+    border: 1px solid #d8dee4;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+    color: #1f2328;
+
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+
+    outline: 0;
+
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.durationField input:hover {
+    border-color: #afb8c1;
+
+    background-color: #f6f8fa;
+}
+
+.durationField input:focus {
+    border-color: #1f883d;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(31, 136, 61, 0.12);
+}
+
+.durationField input::placeholder {
+    color: #afb8c1;
+
+    font-weight: 500;
+}
+
+.durationField span {
+    color: #6e7781;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* INTENSITY */
+
+.intensityOptions {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 8px;
+
+    margin-top: 5px;
+}
+
+.intensityOption {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 40px;
+
+    gap: 7px;
+
+    cursor: pointer;
+}
+
+.fireActive,
+.fireInactive {
+    display: block;
+
+    font-size: 31px;
+    line-height: 1;
+
+    transition:
+        opacity 120ms ease,
+        filter 120ms ease,
+        transform 120ms ease;
+}
+
+.fireActive {
+    opacity: 1;
+
+    filter: grayscale(0);
+}
+
+.fireInactive {
+    opacity: 0.18;
+
+    filter: grayscale(1);
+}
+
+.intensityOption:hover
+    .fireActive,
+.intensityOption:hover
+    .fireInactive {
+    transform:
+        translateY(-1px);
+}
+
+.intensityLabel {
+    min-height: 1em;
+
+    color: #6e7781;
+
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+
+    text-align: center;
+}
+
+
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+    .card {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 540px) {
+    .cardContent {
+        gap: 20px;
+
+        padding: 18px;
+    }
+
+    .header {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 4px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .inputWithUnit {
+        max-width: none;
+    }
+
+    .durationFields {
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .durationField input {
+        width: 100%;
+    }
+
+    .paceFields {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr)
+            auto;
+
+        align-items: end;
+    }
+
+    .paceFields input {
+        width: 100%;
+    }
+}
+
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    .card {
+        animation: none;
+
+        transition: none;
+    }
+}

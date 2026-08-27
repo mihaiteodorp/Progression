@@ -1,0 +1,77 @@
+
+.diagram {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    width:100%;
+}
+
+
+.body{
+    display: block;
+    width: min(100%, 350px);
+    height: auto;
+}
+
+.muscle path {
+    fill: none;
+    stroke: white;
+    stroke-width: 4px;
+    transition:
+        fill 200ms ease,
+        stroke 200ms ease,
+        filter 200ms ease;
+}
+
+.highlighted path {
+    fill: var(--muscle-color);
+    stroke: var(--muscle-stroke);
+    filter: drop-shadow(0 0 7px var(--muscle-glow));
+}
+
+.standardGreen {
+    --muscle-color: rgba(46, 200, 90, 0.6);
+    --muscle-stroke: rgb(75, 255, 125);
+    --muscle-glow: rgba(46, 255, 105, 0.9);
+}
+
+.intensity1 {
+    --muscle-color: rgba(155, 233, 168, 0.6);
+    --muscle-stroke: rgb(155, 233, 168);
+    --muscle-glow: rgba(155, 233, 168, 0.6);
+}
+
+.intensity2 {
+    --muscle-color: rgba(90, 210, 120, 0.6);
+    --muscle-stroke: rgb(90, 225, 125);
+    --muscle-glow: rgba(90, 225, 125, 0.7);
+}
+
+.intensity3 {
+    --muscle-color: rgba(46, 190, 90, 0.6);
+    --muscle-stroke: rgb(60, 230, 105);
+    --muscle-glow: rgba(46, 230, 100, 0.8);
+}
+
+.intensity4 {
+    --muscle-color: rgba(25, 145, 65, 0.6);
+    --muscle-stroke: rgb(45, 215, 95);
+    --muscle-glow: rgba(35, 220, 90, 0.9);
+}
+
+.intensity5 {
+    --muscle-color: rgba(10, 100, 45, 0.6);
+    --muscle-stroke: rgb(35, 255, 100);
+    --muscle-glow: rgb(35, 255, 100);
+}
+
+@media (max-width: 700px) {
+    .diagram {
+        gap: 12px;
+    }
+
+    .body {
+        width: calc(50% - 6px);
+    }
+}

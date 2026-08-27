@@ -1,0 +1,129 @@
+.activity-graph-container {
+    --label-width: 30px;
+    --cell-size: 12px;
+    --cell-gap: 3px;
+    --month-gap: 6px;
+
+    display: grid;
+
+    grid-template-rows:
+        20px repeat(7, var(--cell-size));
+
+    column-gap: var(--cell-gap);
+    row-gap: var(--cell-gap);
+
+    align-items: center;
+
+    width: max-content;
+}
+
+.weekday-label {
+    height: var(--cell-size);
+
+    line-height: var(--cell-size);
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+.month-label {
+    height: var(--cell-size);
+
+    line-height: var(--cell-size);
+
+    font-size: 12px;
+
+    text-align: center;
+
+    color: #6b7280;
+}
+
+.day-cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+
+    padding: 0;
+
+    border: 1px solid transparent;
+    border-radius: 2px;
+
+    background-color: #ebedf0;
+
+    cursor: pointer;
+
+    appearance: none;
+
+    transition:
+        transform 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease,
+        filter 120ms ease;
+}
+
+.day-cell:hover {
+    transform: translateY(-1px);
+
+    border-color: #86d89b;
+
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.12);
+
+    filter: brightness(0.98);
+
+    z-index: 1;
+}
+
+.day-cell:focus-visible {
+    outline: none;
+
+    border-color: #30a14e;
+
+    box-shadow:
+        0 0 0 2px rgba(48, 161, 78, 0.22);
+
+    z-index: 2;
+}
+
+.day-cell-selected {
+    border-color: #30a14e;
+
+    box-shadow:
+        0 0 0 2px rgba(48, 161, 78, 0.20);
+
+    z-index: 1;
+}
+
+.day-cell-selected:hover {
+    transform: translateY(-1px);
+
+    border-color: #216e39;
+
+    box-shadow:
+        0 0 0 2px rgba(48, 161, 78, 0.24),
+        0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.intensity-0 {
+    background-color: #ebedf0;
+}
+
+.intensity-1 {
+    background-color: #d4f4dd;
+}
+
+.intensity-2 {
+    background-color: #9be9a8;
+}
+
+.intensity-3 {
+    background-color: #40c463;
+}
+
+.intensity-4 {
+    background-color: #30a14e;
+}
+
+.intensity-5 {
+    background-color: #216e39;
+}

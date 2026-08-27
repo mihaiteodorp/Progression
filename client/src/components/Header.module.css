@@ -1,0 +1,49 @@
+.header {
+    width: 100%;
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+
+    background-color: #111827;;
+}
+
+.headerInner {
+    width: min(100% - 48px, 1280px);
+    margin-inline: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brandLink {
+    display: inline-flex;
+    align-items: center;
+
+    border-radius: 8px;
+
+    text-decoration: none;
+}
+
+.brandLink:focus-visible {
+    outline: 2px solid rgba(15, 23, 42, 0.18);
+    outline-offset: 4px;
+}
+
+.brandImage {
+    display: block;
+
+    width: auto;
+    height: 38px;
+}
+
+@media (max-width: 700px) {
+    .headerInner {
+        width: min(100% - 28px, 1280px);
+    }
+
+    .brandImage {
+        height: 34px;
+    }
+}

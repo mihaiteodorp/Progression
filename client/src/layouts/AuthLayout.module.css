@@ -1,0 +1,117 @@
+html,
+body,
+#root {
+    min-height: 100%;
+    background-color: #111827;
+}
+
+.authLayout {
+    width: min(100%, 1400px);
+    min-height: 100vh;
+    margin-inline: auto;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 520px);
+
+    background-color: #f8fafc;
+}
+
+.branding {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    padding: 64px;
+
+    background-color: #111827;
+    color: #ffffff;
+}
+
+.logo {
+    width: 250px;
+    height: auto;
+}
+
+.brandingText {
+    margin-top: 48px;
+    max-width: 520px;
+}
+
+.brandingText h2 {
+    margin: 0;
+
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 1.05;
+    font-weight: 700;
+}
+
+.brandingText p {
+    margin: 24px 0 0;
+
+    max-width: 460px;
+
+    font-size: 17px;
+    line-height: 1.6;
+
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.authContent {
+    min-width: 0;
+
+    display: flex;
+    align-items: stretch;
+
+    background-color: #f8fafc;
+}
+
+.authContent > * {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .authLayout {
+        grid-template-columns: 1fr;
+    }
+
+    .branding {
+        min-height: 220px;
+        padding: 40px 32px;
+    }
+
+    .logo {
+        width: 160px;
+    }
+
+    .brandingText {
+        margin-top: 32px;
+    }
+
+    .brandingText h2 {
+        font-size: 40px;
+    }
+}
+
+@media (max-width: 600px) {
+    .branding {
+        min-height: auto;
+        padding: 28px 20px;
+    }
+
+    .logo {
+        width: 140px;
+    }
+
+    .brandingText {
+        margin-top: 24px;
+    }
+
+    .brandingText h2 {
+        font-size: 32px;
+    }
+
+    .brandingText p {
+        margin-top: 16px;
+        font-size: 15px;
+    }
+}
