@@ -13,6 +13,7 @@ import AuthLayout from "./layouts/AuthLayout";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
+import LiveWorkoutPage from "./pages/LiveWorkoutPage";
 
 
 
@@ -31,6 +32,7 @@ function App() {
         <Route element={<AppLayout />} >
           <Route path='/' element={<SummaryPage />} />
           <Route path='/workouts' element={<WorkoutsPage  />} />
+          <Route path='/liveworkout' element={<LiveWorkoutPage/>} />
         </Route>
       </Route>
 
