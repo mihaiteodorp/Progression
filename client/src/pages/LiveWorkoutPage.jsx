@@ -1,7 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './LiveWorkoutPage.module.css';
 
+import chevronIcon from '../assets/live-workout-icons/chevron.png';
+
+import {
+    DndContext,
+    PointerSensor,
+    useSensor,
+    useSensors
+} from '@dnd-kit/core';
+
+import {
+    SortableContext,
+    arrayMove,
+    verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+
+import SortableSetRow from '../components/SortableSetRow.jsx';
+
+
 export default function LiveWorkoutPage() {
+
     const [liveWorkout, setLiveWorkout] = useState({
         startedAt: null,
         endedAt: null,
@@ -12,32 +31,47 @@ export default function LiveWorkoutPage() {
 
     const [newExerciseName, setNewExerciseName] = useState('');
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [isExerciseFormOpen, setIsExerciseFormOpen] = useState(false);
+    const [expandedExerciseId, setExpandedExerciseId] = useState(null);
+    const [editingSet, setEditingSet] = useState(null);
+
+    const addSetButtonRefs = useRef({});
+    const pendingScrollRef = useRef(null);
+
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8
+            }
+        })
+    );
 
 
     useEffect(() => {
+
         if (!liveWorkout.startedAt || liveWorkout.endedAt) {
             return;
         }
 
         function updateElapsedTime() {
-            const startTime = new Date(
-                liveWorkout.startedAt
-            ).getTime();
 
-            const currentTime = liveWorkout.pausedAt
-                ? new Date(liveWorkout.pausedAt).getTime()
-                : Date.now();
+            const startTime =
+                new Date(liveWorkout.startedAt).getTime();
+
+            const currentTime =
+                liveWorkout.pausedAt
+                    ? new Date(liveWorkout.pausedAt).getTime()
+                    : Date.now();
 
             const elapsedMilliseconds =
                 currentTime -
                 startTime -
                 liveWorkout.totalPausedMilliseconds;
 
-            const differenceInSeconds = Math.floor(
-                elapsedMilliseconds / 1000
+            setElapsedSeconds(
+                Math.floor(elapsedMilliseconds / 1000)
             );
-
-            setElapsedSeconds(differenceInSeconds);
         }
 
         updateElapsedTime();
@@ -54,6 +88,7 @@ export default function LiveWorkoutPage() {
         return () => {
             clearInterval(intervalId);
         };
+
     }, [
         liveWorkout.startedAt,
         liveWorkout.endedAt,
@@ -62,18 +97,77 @@ export default function LiveWorkoutPage() {
     ]);
 
 
+    useEffect(() => {
+
+        const pendingScroll =
+            pendingScrollRef.current;
+
+        if (!pendingScroll) {
+            return;
+        }
+
+
+        if (pendingScroll.type === 'set') {
+
+            const setElement =
+                document.getElementById(
+                    `set-${pendingScroll.id}`
+                );
+
+            if (!setElement) {
+                return;
+            }
+
+            setElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+
+            pendingScrollRef.current = null;
+
+            return;
+        }
+
+
+        if (pendingScroll.type === 'addSet') {
+
+            const addSetButton =
+                addSetButtonRefs.current[
+                pendingScroll.id
+                ];
+
+            if (!addSetButton) {
+                return;
+            }
+
+            addSetButton.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+
+            pendingScrollRef.current = null;
+        }
+
+    }, [liveWorkout.exercises]);
+
+
     function handleStartWorkout() {
-        setLiveWorkout((currentWorkout) => ({
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
-            startedAt: new Date().toISOString()
+
+            startedAt:
+                new Date().toISOString()
         }));
     }
 
 
     function handleAddExercise(event) {
+
         event.preventDefault();
 
-        const trimmedName = newExerciseName.trim();
+        const trimmedName =
+            newExerciseName.trim();
 
         if (!trimmedName) {
             return;
@@ -85,8 +179,18 @@ export default function LiveWorkoutPage() {
             sets: []
         };
 
-        setLiveWorkout((currentWorkout) => ({
+        setExpandedExerciseId(
+            newExercise.id
+        );
+
+        pendingScrollRef.current = {
+            type: 'addSet',
+            id: newExercise.id
+        };
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
+
             exercises: [
                 ...currentWorkout.exercises,
                 newExercise
@@ -94,10 +198,12 @@ export default function LiveWorkoutPage() {
         }));
 
         setNewExerciseName('');
+        setIsExerciseFormOpen(false);
     }
 
 
     function handleAddSet(exerciseId) {
+
         const newSet = {
             id: crypto.randomUUID(),
             reps: '',
@@ -105,23 +211,35 @@ export default function LiveWorkoutPage() {
             completedAt: null
         };
 
-        setLiveWorkout((currentWorkout) => ({
-            ...currentWorkout,
-            exercises: currentWorkout.exercises.map(
-                (exercise) => {
-                    if (exercise.id !== exerciseId) {
-                        return exercise;
-                    }
+        pendingScrollRef.current = {
+            type: 'set',
+            id: newSet.id
+        };
 
-                    return {
-                        ...exercise,
-                        sets: [
-                            ...exercise.sets,
-                            newSet
-                        ]
-                    };
-                }
-            )
+        setLiveWorkout(currentWorkout => ({
+            ...currentWorkout,
+
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets: [
+                                ...exercise.sets,
+                                newSet
+                            ]
+                        };
+                    }
+                )
         }));
     }
 
@@ -132,88 +250,256 @@ export default function LiveWorkoutPage() {
         field,
         value
     ) {
-        setLiveWorkout((currentWorkout) => ({
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
-            exercises: currentWorkout.exercises.map(
-                (exercise) => {
-                    if (exercise.id !== exerciseId) {
-                        return exercise;
-                    }
 
-                    return {
-                        ...exercise,
-                        sets: exercise.sets.map(
-                            (set) => {
-                                if (set.id !== setId) {
-                                    return set;
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets: exercise.sets.map(
+                                set => {
+
+                                    if (
+                                        set.id !==
+                                        setId
+                                    ) {
+                                        return set;
+                                    }
+
+                                    return {
+                                        ...set,
+                                        [field]: value
+                                    };
                                 }
-
-                                return {
-                                    ...set,
-                                    [field]: value
-                                };
-                            }
-                        )
-                    };
-                }
-            )
+                            )
+                        };
+                    }
+                )
         }));
     }
 
 
-    function handleCompleteSet(exerciseId, setId) {
-        setLiveWorkout((currentWorkout) => ({
+    function handleCompleteSet(
+        exerciseId,
+        setId
+    ) {
+
+        pendingScrollRef.current = {
+            type: 'addSet',
+            id: exerciseId
+        };
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
-            exercises: currentWorkout.exercises.map(
-                (exercise) => {
-                    if (exercise.id !== exerciseId) {
-                        return exercise;
-                    }
 
-                    return {
-                        ...exercise,
-                        sets: exercise.sets.map(
-                            (set) => {
-                                if (set.id !== setId) {
-                                    return set;
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets: exercise.sets.map(
+                                set => {
+
+                                    if (
+                                        set.id !==
+                                        setId
+                                    ) {
+                                        return set;
+                                    }
+
+                                    return {
+                                        ...set,
+
+                                        completedAt:
+                                            new Date()
+                                                .toISOString()
+                                    };
                                 }
-
-                                return {
-                                    ...set,
-                                    completedAt:
-                                        new Date().toISOString()
-                                };
-                            }
-                        )
-                    };
-                }
-            )
+                            )
+                        };
+                    }
+                )
         }));
+    }
+
+
+    function handleDeleteSet(
+        exerciseId,
+        setId
+    ) {
+
+        setLiveWorkout(currentWorkout => ({
+            ...currentWorkout,
+
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets:
+                                exercise.sets.filter(
+                                    set =>
+                                        set.id !==
+                                        setId
+                                )
+                        };
+                    }
+                )
+        }));
+
+
+        if (
+            editingSet?.exerciseId ===
+            exerciseId &&
+            editingSet?.setId === setId
+        ) {
+            setEditingSet(null);
+        }
+    }
+
+
+    function handleEditSet(
+        exerciseId,
+        set
+    ) {
+
+        setEditingSet({
+            exerciseId,
+            setId: set.id,
+            reps: set.reps,
+            weightKg: set.weightKg
+        });
+    }
+
+
+    function handleEditingSetChange(
+        field,
+        value
+    ) {
+
+        setEditingSet(current => ({
+            ...current,
+
+            [field]: value
+        }));
+    }
+
+
+    function handleSaveSet() {
+
+        if (!editingSet) {
+            return;
+        }
+
+        setLiveWorkout(currentWorkout => ({
+            ...currentWorkout,
+
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            editingSet.exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets: exercise.sets.map(
+                                set => {
+
+                                    if (
+                                        set.id !==
+                                        editingSet.setId
+                                    ) {
+                                        return set;
+                                    }
+
+                                    return {
+                                        ...set,
+
+                                        reps:
+                                            editingSet.reps,
+
+                                        weightKg:
+                                            editingSet.weightKg
+                                    };
+                                }
+                            )
+                        };
+                    }
+                )
+        }));
+
+        setEditingSet(null);
     }
 
 
     function handlePauseWorkout() {
-        setLiveWorkout((currentWorkout) => ({
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
-            pausedAt: new Date().toISOString()
+
+            pausedAt:
+                new Date().toISOString()
         }));
     }
 
 
     function handleResumeWorkout() {
-        setLiveWorkout((currentWorkout) => {
-            const pauseStarted = new Date(
-                currentWorkout.pausedAt
-            ).getTime();
+
+        setLiveWorkout(currentWorkout => {
+
+            const pauseStarted =
+                new Date(
+                    currentWorkout.pausedAt
+                ).getTime();
 
             const pausedUntilNow =
-                Date.now() - pauseStarted;
+                Date.now() -
+                pauseStarted;
 
             return {
                 ...currentWorkout,
+
                 pausedAt: null,
+
                 totalPausedMilliseconds:
-                    currentWorkout.totalPausedMilliseconds +
+                    currentWorkout
+                        .totalPausedMilliseconds +
                     pausedUntilNow
             };
         });
@@ -221,354 +507,939 @@ export default function LiveWorkoutPage() {
 
 
     function handleEndWorkout() {
-        setLiveWorkout((currentWorkout) => ({
+
+        setLiveWorkout(currentWorkout => {
+
+            let totalPausedMilliseconds =
+                currentWorkout
+                    .totalPausedMilliseconds;
+
+            if (currentWorkout.pausedAt) {
+
+                const pauseStarted =
+                    new Date(
+                        currentWorkout.pausedAt
+                    ).getTime();
+
+                totalPausedMilliseconds +=
+                    Date.now() -
+                    pauseStarted;
+            }
+
+            return {
+                ...currentWorkout,
+
+                endedAt:
+                    new Date().toISOString(),
+
+                pausedAt: null,
+
+                totalPausedMilliseconds
+            };
+        });
+    }
+
+
+    function handleToggleExercise(
+        exerciseId
+    ) {
+
+        if (editingSet) {
+            return;
+        }
+
+        setExpandedExerciseId(
+            currentId =>
+                currentId === exerciseId
+                    ? null
+                    : exerciseId
+        );
+    }
+
+
+    function handleDragEnd(
+        event,
+        exerciseId
+    ) {
+
+        const { active, over } = event;
+
+        if (!over) {
+            return;
+        }
+
+        if (active.id === over.id) {
+            return;
+        }
+
+        setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
-            endedAt: new Date().toISOString()
+
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+                        const oldIndex =
+                            exercise.sets.findIndex(
+                                set =>
+                                    set.id ===
+                                    active.id
+                            );
+
+                        const newIndex =
+                            exercise.sets.findIndex(
+                                set =>
+                                    set.id ===
+                                    over.id
+                            );
+
+                        if (
+                            oldIndex === -1 ||
+                            newIndex === -1
+                        ) {
+                            return exercise;
+                        }
+
+                        return {
+                            ...exercise,
+
+                            sets: arrayMove(
+                                exercise.sets,
+                                oldIndex,
+                                newIndex
+                            )
+                        };
+                    }
+                )
         }));
     }
 
 
-    function formatElapsedTime(totalSeconds) {
-        const hours = Math.floor(
-            totalSeconds / 3600
-        );
+    function formatElapsedTime(
+        totalSeconds
+    ) {
 
-        const minutes = Math.floor(
-            (totalSeconds % 3600) / 60
-        );
+        const hours =
+            Math.floor(
+                totalSeconds / 3600
+            );
 
-        const seconds = Math.floor(
-            totalSeconds % 60
-        );
+        const minutes =
+            Math.floor(
+                (totalSeconds % 3600) /
+                60
+            );
+
+        const seconds =
+            totalSeconds % 60;
 
         return [
             hours,
             minutes,
             seconds
         ]
-            .map((value) =>
-                String(value).padStart(2, '0')
+            .map(value =>
+                String(value)
+                    .padStart(2, '0')
             )
             .join(':');
     }
 
 
+    function getStatusClass() {
+
+        if (liveWorkout.endedAt) {
+            return styles.finishedStatus;
+        }
+
+        if (liveWorkout.pausedAt) {
+            return styles.pausedStatus;
+        }
+
+        return styles.activeStatus;
+    }
+
+
+    function getStatusText() {
+
+        if (liveWorkout.endedAt) {
+            return 'Workout finished';
+        }
+
+        if (liveWorkout.pausedAt) {
+            return 'Workout paused';
+        }
+
+        return 'Workout in progress';
+    }
+
+
     return (
-        <main className={styles.liveWorkoutPage}>
+        <main className={styles.page}>
+
             <h1 className={styles.pageTitle}>
                 Live workout
             </h1>
 
+
             {!liveWorkout.startedAt ? (
-                <section className={styles.startState}>
-                    <div className={styles.startIcon}>
-                        ▶
-                    </div>
 
-                    <h2 className={styles.startTitle}>
-                        Ready to train?
-                    </h2>
+                <section
+                    className={
+                        styles.preWorkoutCard
+                    }
+                >
 
-                    <p className={styles.startDescription}>
-                        Track your exercises, sets, reps,
-                        weight and workout time as you train.
-                    </p>
-
-                    <button
-                        type="button"
-                        className={styles.startButton}
-                        onClick={handleStartWorkout}
+                    <div
+                        className={
+                            styles.preWorkoutStatus
+                        }
                     >
-                        Start workout
-                    </button>
-                </section>
-            ) : (
-                <>
-                    <div className={styles.workoutHeader}>
+
                         <p
                             className={
-                                liveWorkout.endedAt
-                                    ? styles.finishedStatus
-                                    : liveWorkout.pausedAt
-                                        ? styles.pausedStatus
-                                        : styles.status
+                                styles.metaLabel
                             }
                         >
-                            {liveWorkout.endedAt
-                                ? 'Workout finished'
-                                : liveWorkout.pausedAt
-                                    ? 'Workout paused'
-                                    : 'Workout in progress'}
+                            STATUS
                         </p>
 
-                        <p className={styles.timer}>
-                            {formatElapsedTime(
-                                elapsedSeconds
-                            )}
+                        <p
+                            className={
+                                styles.readyStatus
+                            }
+                        >
+                            Ready to start
                         </p>
+
                     </div>
 
-                    {!liveWorkout.endedAt && (
-                        <form
-                            className={styles.exerciseForm}
-                            onSubmit={handleAddExercise}
+
+                    <div
+                        className={
+                            styles.preWorkoutContent
+                        }
+                    >
+
+                        <p
+                            className={
+                                styles.metaLabel
+                            }
                         >
-                            <div
+                            LIVE WORKOUT
+                        </p>
+
+                        <h2
+                            className={
+                                styles.preWorkoutTitle
+                            }
+                        >
+                            Start a new workout
+                        </h2>
+
+                        <p
+                            className={
+                                styles.preWorkoutDescription
+                            }
+                        >
+                            Track your exercises,
+                            sets, reps, weight and
+                            workout duration as you
+                            train.
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        className={
+                            styles.preWorkoutActions
+                        }
+                    >
+
+                        <button
+                            type="button"
+                            className={
+                                styles.startButton
+                            }
+                            onClick={
+                                handleStartWorkout
+                            }
+                        >
+                            Start workout
+                        </button>
+
+                    </div>
+
+                </section>
+
+            ) : (
+
+                <section
+                    className={
+                        styles.workoutCard
+                    }
+                >
+
+                    <div
+                        className={
+                            styles.metaGrid
+                        }
+                    >
+
+                        <div>
+
+                            <p
                                 className={
-                                    styles.exerciseNameField
+                                    styles.metaLabel
                                 }
                             >
-                                <label
-                                    htmlFor="exercise-name"
+                                STATUS
+                            </p>
+
+                            <p
+                                className={
+                                    getStatusClass()
+                                }
+                            >
+                                {getStatusText()}
+                            </p>
+
+                        </div>
+
+
+                        <div
+                            className={
+                                styles.timeBlock
+                            }
+                        >
+
+                            <p
+                                className={
+                                    styles.metaLabel
+                                }
+                            >
+                                TIME
+                            </p>
+
+                            <p
+                                className={
+                                    styles.timer
+                                }
+                            >
+                                {formatElapsedTime(
+                                    elapsedSeconds
+                                )}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        className={
+                            styles.exerciseToolbar
+                        }
+                    >
+
+                        <p
+                            className={
+                                styles.metaLabel
+                            }
+                        >
+                            EXERCISES
+                        </p>
+
+                        {!liveWorkout.endedAt &&
+                            !isExerciseFormOpen && (
+
+                                <button
+                                    type="button"
                                     className={
-                                        styles.fieldLabel
+                                        styles
+                                            .addExerciseLink
+                                    }
+                                    disabled={
+                                        Boolean(
+                                            liveWorkout
+                                                .pausedAt
+                                        )
+                                    }
+                                    onClick={() =>
+                                        setIsExerciseFormOpen(
+                                            true
+                                        )
                                     }
                                 >
-                                    Exercise name
-                                </label>
+                                    + Add exercise
+                                </button>
+
+                            )}
+
+                    </div>
+
+
+                    {isExerciseFormOpen &&
+                        !liveWorkout.endedAt && (
+
+                            <form
+                                className={
+                                    styles.exerciseForm
+                                }
+                                onSubmit={
+                                    handleAddExercise
+                                }
+                            >
 
                                 <input
                                     type="text"
-                                    id="exercise-name"
-                                    className={styles.textInput}
-                                    value={newExerciseName}
-                                    onChange={(event) =>
-                                        setNewExerciseName(
-                                            event.target.value
+                                    className={
+                                        styles
+                                            .exerciseInput
+                                    }
+                                    value={
+                                        newExerciseName
+                                    }
+                                    disabled={
+                                        Boolean(
+                                            liveWorkout
+                                                .pausedAt
                                         )
                                     }
-                                    placeholder="Bench Press"
+                                    onChange={event =>
+                                        setNewExerciseName(
+                                            event.target
+                                                .value
+                                        )
+                                    }
+                                    placeholder="Exercise name"
+                                    autoFocus
                                 />
-                            </div>
 
-                            <button
-                                type="submit"
-                                className={
-                                    styles.primaryButton
-                                }
-                            >
-                                Add exercise
-                            </button>
-                        </form>
-                    )}
+                                <button
+                                    type="submit"
+                                    className={
+                                        styles.addButton
+                                    }
+                                    disabled={
+                                        Boolean(
+                                            liveWorkout
+                                                .pausedAt
+                                        )
+                                    }
+                                >
+                                    Add
+                                </button>
 
-                    <section
-                        className={styles.exerciseSection}
+                                <button
+                                    type="button"
+                                    className={
+                                        styles.cancelButton
+                                    }
+                                    onClick={() => {
+
+                                        setIsExerciseFormOpen(
+                                            false
+                                        );
+
+                                        setNewExerciseName(
+                                            ''
+                                        );
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+
+                            </form>
+
+                        )}
+
+
+                    <div
+                        className={
+                            styles.exerciseScrollArea
+                        }
                     >
-                        <h2
-                            className={styles.sectionTitle}
-                        >
-                            Exercises
-                        </h2>
 
                         {liveWorkout.exercises.length === 0 ? (
+
                             <p
                                 className={
-                                    styles.emptyMessage
+                                    styles.emptyText
                                 }
                             >
                                 No exercises added yet.
                             </p>
+
                         ) : (
+
                             <div
                                 className={
                                     styles.exerciseList
                                 }
                             >
+
                                 {liveWorkout.exercises.map(
-                                    (exercise) => (
-                                        <article
-                                            key={exercise.id}
-                                            className={
-                                                styles.exerciseCard
-                                            }
-                                        >
-                                            <h3
+                                    (
+                                        exercise,
+                                        exerciseIndex
+                                    ) => {
+
+                                        const isExpanded =
+                                            expandedExerciseId ===
+                                            exercise.id;
+
+
+                                        const completedSets =
+                                            exercise.sets.filter(
+                                                set =>
+                                                    set.completedAt
+                                            );
+
+
+                                        const averageReps =
+                                            completedSets.length > 0
+                                                ? completedSets.reduce(
+                                                    (
+                                                        sum,
+                                                        set
+                                                    ) =>
+                                                        sum +
+                                                        Number(
+                                                            set.reps ||
+                                                            0
+                                                        ),
+                                                    0
+                                                ) /
+                                                completedSets.length
+                                                : null;
+
+
+                                        const weightedSets =
+                                            completedSets.filter(
+                                                set =>
+                                                    set.weightKg !==
+                                                    ''
+                                            );
+
+
+                                        const averageWeight =
+                                            weightedSets.length > 0
+                                                ? weightedSets.reduce(
+                                                    (
+                                                        sum,
+                                                        set
+                                                    ) =>
+                                                        sum +
+                                                        Number(
+                                                            set.weightKg
+                                                        ),
+                                                    0
+                                                ) /
+                                                weightedSets.length
+                                                : null;
+
+
+                                        const totalVolume =
+                                            completedSets.reduce(
+                                                (
+                                                    sum,
+                                                    set
+                                                ) =>
+                                                    sum +
+                                                    Number(
+                                                        set.reps ||
+                                                        0
+                                                    ) *
+                                                    Number(
+                                                        set.weightKg ||
+                                                        0
+                                                    ),
+                                                0
+                                            );
+
+
+                                        return (
+
+                                            <section
+                                                key={
+                                                    exercise.id
+                                                }
                                                 className={
-                                                    styles.exerciseTitle
+                                                    styles.exercise
                                                 }
                                             >
-                                                {exercise.name}
-                                            </h3>
 
-                                            {exercise.sets.length === 0 ? (
-                                                <p
-                                                    className={
-                                                        styles.emptyMessage
-                                                    }
-                                                >
-                                                    No sets added yet.
-                                                </p>
-                                            ) : (
                                                 <div
                                                     className={
-                                                        styles.setList
-                                                    }
-                                                >
-                                                    {exercise.sets.map(
-                                                        (
-                                                            set,
-                                                            index
-                                                        ) => (
-                                                            <div
-                                                                key={
-                                                                    set.id
-                                                                }
-                                                                className={
-                                                                    styles.setRow
-                                                                }
-                                                            >
-                                                                <span
-                                                                    className={
-                                                                        styles.setNumber
-                                                                    }
-                                                                >
-                                                                    Set{' '}
-                                                                    {index +
-                                                                        1}
-                                                                </span>
-
-                                                                <label
-                                                                    className={
-                                                                        styles.setField
-                                                                    }
-                                                                >
-                                                                    <span
-                                                                        className={
-                                                                            styles.fieldLabel
-                                                                        }
-                                                                    >
-                                                                        Reps
-                                                                    </span>
-
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        step="1"
-                                                                        className={
-                                                                            styles.numberInput
-                                                                        }
-                                                                        value={
-                                                                            set.reps
-                                                                        }
-                                                                        disabled={Boolean(
-                                                                            set.completedAt
-                                                                        )}
-                                                                        onChange={(
-                                                                            event
-                                                                        ) =>
-                                                                            handleSetChange(
-                                                                                exercise.id,
-                                                                                set.id,
-                                                                                'reps',
-                                                                                event
-                                                                                    .target
-                                                                                    .value
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </label>
-
-                                                                <label
-                                                                    className={
-                                                                        styles.setField
-                                                                    }
-                                                                >
-                                                                    <span
-                                                                        className={
-                                                                            styles.fieldLabel
-                                                                        }
-                                                                    >
-                                                                        Weight
-                                                                    </span>
-
-                                                                    <input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        step="0.5"
-                                                                        className={
-                                                                            styles.numberInput
-                                                                        }
-                                                                        value={
-                                                                            set.weightKg
-                                                                        }
-                                                                        disabled={Boolean(
-                                                                            set.completedAt
-                                                                        )}
-                                                                        onChange={(
-                                                                            event
-                                                                        ) =>
-                                                                            handleSetChange(
-                                                                                exercise.id,
-                                                                                set.id,
-                                                                                'weightKg',
-                                                                                event
-                                                                                    .target
-                                                                                    .value
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </label>
-
-                                                                {set.completedAt ? (
-                                                                    <span
-                                                                        className={
-                                                                            styles.completedLabel
-                                                                        }
-                                                                    >
-                                                                        ✓ Completed
-                                                                    </span>
-                                                                ) : (
-                                                                    <button
-                                                                        type="button"
-                                                                        className={
-                                                                            styles.secondaryButton
-                                                                        }
-                                                                        onClick={() =>
-                                                                            handleCompleteSet(
-                                                                                exercise.id,
-                                                                                set.id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Complete set
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {!liveWorkout.endedAt && (
-                                                <button
-                                                    type="button"
-                                                    className={
-                                                        styles.secondaryButton
+                                                        styles
+                                                            .exerciseHeading
                                                     }
                                                     onClick={() =>
-                                                        handleAddSet(
+                                                        handleToggleExercise(
                                                             exercise.id
                                                         )
                                                     }
                                                 >
-                                                    Add set
-                                                </button>
-                                            )}
-                                        </article>
-                                    )
+
+                                                    <span
+                                                        className={
+                                                            styles
+                                                                .exerciseNumber
+                                                        }
+                                                    >
+                                                        {exerciseIndex +
+                                                            1}
+                                                    </span>
+
+
+                                                    <h3
+                                                        className={
+                                                            styles
+                                                                .exerciseTitle
+                                                        }
+                                                    >
+                                                        {exercise.name}
+                                                    </h3>
+
+
+                                                    <span className={styles.exerciseSummary}>
+
+                                                        {completedSets.length > 0 &&
+                                                            averageReps !== null &&
+                                                            averageWeight !== null && (
+
+                                                                <span
+                                                                    className={`${styles.averageSummary} ${isExpanded
+                                                                            ? styles.averageSummaryHidden
+                                                                            : ''
+                                                                        }`}
+                                                                >
+                                                                    Avg{' '}
+                                                                    {averageReps.toFixed(1)}
+                                                                    {' × '}
+                                                                    {averageWeight.toFixed(1)}
+                                                                    {' kg'}
+
+                                                                    {totalVolume > 0 && (
+                                                                        <span
+                                                                            className={
+                                                                                styles.summaryDivider
+                                                                            }
+                                                                        >
+                                                                            ·
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+
+                                                            )}
+
+                                                        {totalVolume > 0 && (
+                                                            <span className={styles.volumeSummary}>
+                                                                {Math.round(
+                                                                    totalVolume
+                                                                ).toLocaleString()}
+                                                                {' kg volume'}
+                                                            </span>
+                                                        )}
+
+                                                    </span>
+
+
+                                                    <span
+                                                        className={
+                                                            styles
+                                                                .setCount
+                                                        }
+                                                    >
+                                                        {
+                                                            exercise
+                                                                .sets
+                                                                .length
+                                                        }{' '}
+
+                                                        {exercise
+                                                            .sets
+                                                            .length ===
+                                                            1
+                                                            ? 'set'
+                                                            : 'sets'}
+                                                    </span>
+
+
+                                                    <button
+                                                        type="button"
+                                                        className={
+                                                            styles
+                                                                .exerciseToggle
+                                                        }
+                                                        aria-label={
+                                                            isExpanded
+                                                                ? 'Collapse exercise'
+                                                                : 'Expand exercise'
+                                                        }
+                                                        aria-expanded={
+                                                            isExpanded
+                                                        }
+                                                        title={
+                                                            isExpanded
+                                                                ? 'Collapse exercise'
+                                                                : 'Expand exercise'
+                                                        }
+                                                        onClick={event => {
+
+                                                            event.stopPropagation();
+
+                                                            handleToggleExercise(
+                                                                exercise.id
+                                                            );
+                                                        }}
+                                                    >
+
+                                                        <span
+                                                            className={`${styles.exerciseChevron} ${isExpanded
+                                                                ? styles.exerciseChevronExpanded
+                                                                : ''
+                                                                }`}
+                                                        >
+
+                                                            <img
+                                                                src={
+                                                                    chevronIcon
+                                                                }
+                                                                alt=""
+                                                            />
+
+                                                        </span>
+
+                                                    </button>
+
+                                                </div>
+
+
+                                                <div
+                                                    className={`${styles.exerciseContent} ${isExpanded
+                                                        ? styles.exerciseContentExpanded
+                                                        : ''
+                                                        }`}
+                                                    aria-hidden={
+                                                        !isExpanded
+                                                    }
+                                                >
+
+                                                    <div
+                                                        className={
+                                                            styles
+                                                                .exerciseContentInner
+                                                        }
+                                                    >
+
+                                                        {exercise.sets.length ===
+                                                            0 ? (
+
+                                                            <p
+                                                                className={
+                                                                    styles
+                                                                        .emptySetText
+                                                                }
+                                                            >
+                                                                No sets added.
+                                                            </p>
+
+                                                        ) : (
+
+                                                            <>
+
+                                                                <div
+                                                                    className={
+                                                                        styles
+                                                                            .setHeader
+                                                                    }
+                                                                >
+                                                                    <span />
+                                                                    <span>
+                                                                        SET
+                                                                    </span>
+                                                                    <span>
+                                                                        REPS
+                                                                    </span>
+                                                                    <span>
+                                                                        WEIGHT
+                                                                    </span>
+                                                                    <span />
+                                                                    <span />
+                                                                </div>
+
+
+                                                                <DndContext
+                                                                    sensors={
+                                                                        sensors
+                                                                    }
+                                                                    onDragEnd={
+                                                                        event =>
+                                                                            handleDragEnd(
+                                                                                event,
+                                                                                exercise.id
+                                                                            )
+                                                                    }
+                                                                >
+
+                                                                    <SortableContext
+                                                                        items={exercise.sets.map(
+                                                                            set =>
+                                                                                set.id
+                                                                        )}
+                                                                        strategy={
+                                                                            verticalListSortingStrategy
+                                                                        }
+                                                                    >
+
+                                                                        <div
+                                                                            className={
+                                                                                styles
+                                                                                    .setList
+                                                                            }
+                                                                        >
+
+                                                                            {exercise.sets.map(
+                                                                                (
+                                                                                    set,
+                                                                                    setIndex
+                                                                                ) => (
+
+                                                                                    <SortableSetRow
+                                                                                        key={
+                                                                                            set.id
+                                                                                        }
+                                                                                        set={
+                                                                                            set
+                                                                                        }
+                                                                                        setIndex={
+                                                                                            setIndex
+                                                                                        }
+                                                                                        exercise={
+                                                                                            exercise
+                                                                                        }
+                                                                                        editingSet={
+                                                                                            editingSet
+                                                                                        }
+                                                                                        liveWorkout={
+                                                                                            liveWorkout
+                                                                                        }
+                                                                                        handleSetChange={
+                                                                                            handleSetChange
+                                                                                        }
+                                                                                        handleEditingSetChange={
+                                                                                            handleEditingSetChange
+                                                                                        }
+                                                                                        handleCompleteSet={
+                                                                                            handleCompleteSet
+                                                                                        }
+                                                                                        handleSaveSet={
+                                                                                            handleSaveSet
+                                                                                        }
+                                                                                        handleEditSet={
+                                                                                            handleEditSet
+                                                                                        }
+                                                                                        handleDeleteSet={
+                                                                                            handleDeleteSet
+                                                                                        }
+                                                                                    />
+
+                                                                                )
+                                                                            )}
+
+                                                                        </div>
+
+                                                                    </SortableContext>
+
+                                                                </DndContext>
+
+                                                            </>
+
+                                                        )}
+
+
+                                                        {!liveWorkout.endedAt && (
+
+                                                            <button
+                                                                type="button"
+                                                                ref={
+                                                                    element => {
+
+                                                                        if (
+                                                                            element
+                                                                        ) {
+
+                                                                            addSetButtonRefs.current[
+                                                                                exercise.id
+                                                                            ] =
+                                                                                element;
+
+                                                                        } else {
+
+                                                                            delete addSetButtonRefs.current[
+                                                                                exercise.id
+                                                                            ];
+                                                                        }
+                                                                    }
+                                                                }
+                                                                className={
+                                                                    styles
+                                                                        .addSetLink
+                                                                }
+                                                                disabled={
+                                                                    Boolean(
+                                                                        liveWorkout
+                                                                            .pausedAt
+                                                                    )
+                                                                }
+                                                                onClick={() =>
+                                                                    handleAddSet(
+                                                                        exercise.id
+                                                                    )
+                                                                }
+                                                            >
+                                                                + Add set
+                                                            </button>
+
+                                                        )}
+
+                                                    </div>
+
+                                                </div>
+
+                                            </section>
+
+                                        );
+                                    }
                                 )}
+
                             </div>
+
                         )}
-                    </section>
+
+                    </div>
+
 
                     {!liveWorkout.endedAt && (
+
                         <div
                             className={
                                 styles.workoutActions
                             }
                         >
+
                             {liveWorkout.pausedAt ? (
+
                                 <button
                                     type="button"
                                     className={
@@ -580,7 +1451,9 @@ export default function LiveWorkoutPage() {
                                 >
                                     Resume
                                 </button>
+
                             ) : (
+
                                 <button
                                     type="button"
                                     className={
@@ -592,21 +1465,30 @@ export default function LiveWorkoutPage() {
                                 >
                                     Pause
                                 </button>
+
                             )}
+
 
                             <button
                                 type="button"
                                 className={
-                                    styles.endWorkoutButton
+                                    styles.endButton
                                 }
-                                onClick={handleEndWorkout}
+                                onClick={
+                                    handleEndWorkout
+                                }
                             >
                                 End workout
                             </button>
+
                         </div>
+
                     )}
-                </>
+
+                </section>
+
             )}
+
         </main>
     );
 }
