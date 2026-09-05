@@ -1,7 +1,9 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useState } from 'react';
 
 import styles from '../pages/LiveWorkoutPage.module.css';
+import otherStyles from './SortableSetRow.module.css';
 
 import dragIcon from '../assets/live-workout-icons/drag.png';
 import saveIcon from '../assets/live-workout-icons/save.png';
@@ -23,6 +25,9 @@ export default function SortableSetRow({
     handleDeleteSet
 }) {
 
+    const [validationError, setValidationError] =
+        useState('');
+
     const {
         attributes,
         listeners,
@@ -35,168 +40,168 @@ export default function SortableSetRow({
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform:
+            CSS.Transform.toString(
+                transform
+            ),
         transition
     };
 
 
     const isCompleted =
-        Boolean(set.completedAt);
+        Boolean(
+            set.completedAt
+        );
 
     const isEditing =
-        editingSet?.exerciseId === exercise.id &&
-        editingSet?.setId === set.id;
+        editingSet?.exerciseId ===
+            exercise.id &&
+        editingSet?.setId ===
+            set.id;
 
     const isAnySetEditing =
-        Boolean(editingSet);
+        Boolean(
+            editingSet
+        );
 
     const isOtherSetEditing =
         isAnySetEditing &&
         !isEditing;
 
 
+    function validateSet(repsValue, weightValue) {
+
+        const reps =
+            Number(
+                repsValue
+            );
+
+        if (repsValue === '') {
+
+            setValidationError(
+                'Enter the number of reps'
+            );
+
+            return false;
+        }
+
+        if (
+            !Number.isInteger(reps) ||
+            reps <= 0
+        ) {
+
+            setValidationError(
+                'Reps must be a positive whole number'
+            );
+
+            return false;
+        }
+
+        if (weightValue !== '') {
+
+            const weight =
+                Number(
+                    weightValue
+                );
+
+            if (
+                !Number.isFinite(weight) ||
+                weight < 0
+            ) {
+
+                setValidationError(
+                    'Weight cannot be negative'
+                );
+
+                return false;
+            }
+        }
+
+        setValidationError('');
+
+        return true;
+    }
+
+
     return (
+
         <div
             id={`set-${set.id}`}
             ref={setNodeRef}
             style={style}
-            className={`${styles.setRow} ${isDragging
-                    ? styles.draggingSet
-                    : ''
-                }`}
         >
 
-            {isCompleted &&
-                !isAnySetEditing ? (
-
-                <button
-                    type="button"
-                    className={
-                        styles.dragHandle
-                    }
-                    aria-label="Reorder set"
-                    title="Drag to reorder"
-                    {...attributes}
-                    {...listeners}
-                >
-                    <img
-                        src={dragIcon}
-                        alt=""
-                    />
-                </button>
-
-            ) : (
-
-                <span />
-
-            )}
-
-
-            <span
-                className={
-                    styles.setNumber
-                }
+            <div
+                className={`${styles.setRow} ${
+                    isDragging
+                        ? styles.draggingSet
+                        : ''
+                } ${
+                    validationError 
+                    ? otherStyles.setRowWithError
+                    : ''
+                }`}
             >
-                {setIndex + 1}
-            </span>
 
+                {isCompleted &&
+                    !isAnySetEditing ? (
 
-            {isCompleted &&
-                !isEditing ? (
+                    <button
+                        type="button"
+                        className={
+                            styles.dragHandle
+                        }
+                        aria-label="Reorder set"
+                        title="Drag to reorder"
+                        {...attributes}
+                        {...listeners}
+                    >
+                        <img
+                            src={dragIcon}
+                            alt=""
+                        />
+                    </button>
+
+                ) : (
+
+                    <span />
+
+                )}
+
 
                 <span
                     className={
-                        styles.completedValue
+                        styles.setNumber
                     }
                 >
-                    {set.reps}
+                    {setIndex + 1}
                 </span>
 
-            ) : (
 
-                <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    className={
-                        styles.setInput
-                    }
-                    value={
-                        isEditing
-                            ? editingSet.reps
-                            : set.reps
-                    }
-                    disabled={
-                        Boolean(
-                            liveWorkout.pausedAt
-                        ) ||
-                        Boolean(
-                            liveWorkout.endedAt
-                        )
-                    }
-                    onChange={event => {
-
-                        if (isEditing) {
-
-                            handleEditingSetChange(
-                                'reps',
-                                event.target.value
-                            );
-
-                            return;
-                        }
-
-                        handleSetChange(
-                            exercise.id,
-                            set.id,
-                            'reps',
-                            event.target.value
-                        );
-                    }}
-                    placeholder="0"
-                />
-
-            )}
-
-
-            {isCompleted &&
-                !isEditing ? (
-
-                <span
-                    className={
-                        styles.completedWeight
-                    }
-                >
-                    {set.weightKg || 0}
+                {isCompleted &&
+                    !isEditing ? (
 
                     <span
                         className={
-                            styles.unit
+                            styles.completedValue
                         }
                     >
-                        kg
+                        {set.reps}
                     </span>
-                </span>
 
-            ) : (
-
-                <div
-                    className={
-                        styles.weightInputWrap
-                    }
-                >
+                ) : (
 
                     <input
                         type="number"
-                        min="0"
-                        step="0.5"
+                        min="1"
+                        step="1"
                         className={
                             styles.setInput
                         }
                         value={
                             isEditing
-                                ? editingSet.weightKg
-                                : set.weightKg
+                                ? editingSet.reps
+                                : set.reps
                         }
                         disabled={
                             Boolean(
@@ -208,10 +213,12 @@ export default function SortableSetRow({
                         }
                         onChange={event => {
 
+                            setValidationError('');
+
                             if (isEditing) {
 
                                 handleEditingSetChange(
-                                    'weightKg',
+                                    'reps',
                                     event.target.value
                                 );
 
@@ -221,67 +228,234 @@ export default function SortableSetRow({
                             handleSetChange(
                                 exercise.id,
                                 set.id,
-                                'weightKg',
+                                'reps',
                                 event.target.value
                             );
                         }}
                         placeholder="0"
                     />
 
-                    <span
-                        className={
-                            styles.unit
-                        }
-                    >
-                        kg
-                    </span>
+                )}
 
-                </div>
-
-            )}
-
-
-            <div
-                className={
-                    styles.setAction
-                }
-            >
 
                 {isCompleted &&
                     !isEditing ? (
 
                     <span
                         className={
-                            styles.completed
+                            styles.completedWeight
                         }
                     >
-                        Done
+                        {set.weightKg || 0}
+
+                        <span
+                            className={
+                                styles.unit
+                            }
+                        >
+                            kg
+                        </span>
+
                     </span>
 
-                ) : !isCompleted ? (
+                ) : (
 
-                    <button
-                        type="button"
+                    <div
                         className={
-                            styles.completeButton
-                        }
-                        disabled={
-                            Boolean(
-                                liveWorkout.pausedAt
-                            ) ||
-                            Boolean(
-                                liveWorkout.endedAt
-                            )
-                        }
-                        onClick={() =>
-                            handleCompleteSet(
-                                exercise.id,
-                                set.id
-                            )
+                            styles.weightInputWrap
                         }
                     >
-                        Complete
-                    </button>
+
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            className={
+                                styles.setInput
+                            }
+                            value={
+                                isEditing
+                                    ? editingSet.weightKg
+                                    : set.weightKg
+                            }
+                            disabled={
+                                Boolean(
+                                    liveWorkout.pausedAt
+                                ) ||
+                                Boolean(
+                                    liveWorkout.endedAt
+                                )
+                            }
+                            onChange={event => {
+
+                                setValidationError('');
+
+                                if (isEditing) {
+
+                                    handleEditingSetChange(
+                                        'weightKg',
+                                        event.target.value
+                                    );
+
+                                    return;
+                                }
+
+                                handleSetChange(
+                                    exercise.id,
+                                    set.id,
+                                    'weightKg',
+                                    event.target.value
+                                );
+                            }}
+                            placeholder="0"
+                        />
+
+                        <span
+                            className={
+                                styles.unit
+                            }
+                        >
+                            kg
+                        </span>
+
+                    </div>
+
+                )}
+
+
+                <div
+                    className={
+                        styles.setAction
+                    }
+                >
+
+                    {isCompleted &&
+                        !isEditing ? (
+
+                        <span
+                            className={
+                                styles.completed
+                            }
+                        >
+                            Done
+                        </span>
+
+                    ) : !isCompleted ? (
+
+                        <button
+                            type="button"
+                            className={
+                                styles.completeButton
+                            }
+                            disabled={
+                                Boolean(
+                                    liveWorkout.pausedAt
+                                ) ||
+                                Boolean(
+                                    liveWorkout.endedAt
+                                )
+                            }
+                            onClick={() => {
+
+                                if (
+                                    !validateSet(set.reps, set.weightKg)
+                                ) {
+                                    return;
+                                }
+
+                                handleCompleteSet(
+                                    exercise.id,
+                                    set.id
+                                );
+                            }}
+                        >
+                            Complete
+                        </button>
+
+                    ) : (
+
+                        <span />
+
+                    )}
+
+                </div>
+
+
+                {isCompleted &&
+                    !isOtherSetEditing ? (
+
+                    <div
+                        className={`${styles.rowActions} ${
+                            isEditing
+                                ? styles.rowActionsEditing
+                                : ''
+                        }`}
+                    >
+
+                        <button
+                            type="button"
+                            className={
+                                styles.iconButton
+                            }
+                            aria-label={
+                                isEditing
+                                    ? 'Save set'
+                                    : 'Edit set'
+                            }
+                            title={
+                                isEditing
+                                    ? 'Save set'
+                                    : 'Edit set'
+                            }
+                            onClick={() => {
+
+                                if (isEditing) {
+                                    if(!validateSet(editingSet.reps,editingSet.weightKg)){
+                                        return;
+                                    }
+                                    handleSaveSet();
+
+                                    return;
+                                }
+
+                                handleEditSet(
+                                    exercise.id,
+                                    set
+                                );
+                            }}
+                        >
+                            <img
+                                src={
+                                    isEditing
+                                        ? saveIcon
+                                        : editIcon
+                                }
+                                alt=""
+                            />
+                        </button>
+
+
+                        <button
+                            type="button"
+                            className={
+                                styles.iconButton
+                            }
+                            aria-label="Delete set"
+                            title="Delete set"
+                            onClick={() =>
+                                handleDeleteSet(
+                                    exercise.id,
+                                    set.id
+                                )
+                            }
+                        >
+                            <img
+                                src={removeIcon}
+                                alt=""
+                            />
+                        </button>
+
+                    </div>
 
                 ) : (
 
@@ -292,80 +466,16 @@ export default function SortableSetRow({
             </div>
 
 
-            {isCompleted &&
-                !isOtherSetEditing ? (
+            {validationError && (
 
-                <div
-                    className={`${styles.rowActions} ${isEditing
-                            ? styles.rowActionsEditing
-                            : ''
-                        }`}
+                <p
+                    className={
+                        otherStyles
+                            .setValidationError
+                    }
                 >
-
-                    <button
-                        type="button"
-                        className={
-                            styles.iconButton
-                        }
-                        aria-label={
-                            isEditing
-                                ? 'Save set'
-                                : 'Edit set'
-                        }
-                        title={
-                            isEditing
-                                ? 'Save set'
-                                : 'Edit set'
-                        }
-                        onClick={() => {
-
-                            if (isEditing) {
-                                handleSaveSet();
-                                return;
-                            }
-
-                            handleEditSet(
-                                exercise.id,
-                                set
-                            );
-                        }}
-                    >
-                        <img
-                            src={
-                                isEditing
-                                    ? saveIcon
-                                    : editIcon
-                            }
-                            alt=""
-                        />
-                    </button>
-
-
-                    <button
-                        type="button"
-                        className={
-                            styles.iconButton
-                        }
-                        aria-label="Delete set"
-                        title="Delete set"
-                        onClick={() =>
-                            handleDeleteSet(
-                                exercise.id,
-                                set.id
-                            )
-                        }
-                    >
-                        <img
-                            src={removeIcon}
-                            alt=""
-                        />
-                    </button>
-
-                </div>
-
-            ) : (
-
-                <span />
+                    {validationError}
+                </p>
 
             )}
 

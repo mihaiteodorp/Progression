@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './LiveWorkoutPage.module.css';
 
 import chevronIcon from '../assets/live-workout-icons/chevron.png';
+import moreIcon from '../assets/live-workout-icons/more.png';
+import saveIcon from '../assets/live-workout-icons/save.png';
 
 import {
     DndContext,
@@ -17,6 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 
 import SortableSetRow from '../components/SortableSetRow.jsx';
+
+import { createPortal } from 'react-dom';
 
 
 export default function LiveWorkoutPage() {
@@ -35,8 +39,20 @@ export default function LiveWorkoutPage() {
     const [expandedExerciseId, setExpandedExerciseId] = useState(null);
     const [editingSet, setEditingSet] = useState(null);
 
+    const [exerciseNameError, setExerciseNameError] = useState('');
+
+    const [openExerciseMenu, setOpenExerciseMenu] = useState(null);
+    const [exerciseMenuPosition, setExerciseMenuPosition] = useState(null);
+
+    const [exerciseRename, setExerciseRename] = useState(null);
+    const [exerciseRenameError, setExerciseRenameError]=useState('');
+
+
     const addSetButtonRefs = useRef({});
     const pendingScrollRef = useRef(null);
+
+    const exerciseMenuRef = useRef(null);
+    const exerciseOptionsButtonRef = useRef(null);
 
 
     const sensors = useSensors(
@@ -50,18 +66,90 @@ export default function LiveWorkoutPage() {
 
     useEffect(() => {
 
-        if (!liveWorkout.startedAt || liveWorkout.endedAt) {
+        if (openExerciseMenu === null) {
             return;
         }
+
+        function handleClickOutside(event) {
+
+            const clickedInsideMenu =
+                exerciseMenuRef.current?.contains(
+                    event.target
+                );
+
+            const clickedOptionsButton =
+                exerciseOptionsButtonRef.current?.contains(
+                    event.target
+                );
+
+            if (
+                !clickedInsideMenu &&
+                !clickedOptionsButton
+            ) {
+                setOpenExerciseMenu(null);
+                setExerciseMenuPosition(null);
+            }
+        }
+
+
+        function handleKeyDown(event) {
+
+            if (event.key === 'Escape') {
+                setOpenExerciseMenu(null);
+                setExerciseMenuPosition(null);
+            }
+        }
+
+
+        document.addEventListener(
+            'mousedown',
+            handleClickOutside
+        );
+
+        document.addEventListener(
+            'keydown',
+            handleKeyDown
+        );
+
+
+        return () => {
+
+            document.removeEventListener(
+                'mousedown',
+                handleClickOutside
+            );
+
+            document.removeEventListener(
+                'keydown',
+                handleKeyDown
+            );
+        };
+
+    }, [openExerciseMenu]);
+
+
+    useEffect(() => {
+
+        if (
+            !liveWorkout.startedAt ||
+            liveWorkout.endedAt
+        ) {
+            return;
+        }
+
 
         function updateElapsedTime() {
 
             const startTime =
-                new Date(liveWorkout.startedAt).getTime();
+                new Date(
+                    liveWorkout.startedAt
+                ).getTime();
 
             const currentTime =
                 liveWorkout.pausedAt
-                    ? new Date(liveWorkout.pausedAt).getTime()
+                    ? new Date(
+                        liveWorkout.pausedAt
+                    ).getTime()
                     : Date.now();
 
             const elapsedMilliseconds =
@@ -70,20 +158,26 @@ export default function LiveWorkoutPage() {
                 liveWorkout.totalPausedMilliseconds;
 
             setElapsedSeconds(
-                Math.floor(elapsedMilliseconds / 1000)
+                Math.floor(
+                    elapsedMilliseconds / 1000
+                )
             );
         }
 
+
         updateElapsedTime();
+
 
         if (liveWorkout.pausedAt) {
             return;
         }
 
+
         const intervalId = setInterval(
             updateElapsedTime,
             1000
         );
+
 
         return () => {
             clearInterval(intervalId);
@@ -102,6 +196,7 @@ export default function LiveWorkoutPage() {
         const pendingScroll =
             pendingScrollRef.current;
 
+
         if (!pendingScroll) {
             return;
         }
@@ -114,9 +209,11 @@ export default function LiveWorkoutPage() {
                     `set-${pendingScroll.id}`
                 );
 
+
             if (!setElement) {
                 return;
             }
+
 
             setElement.scrollIntoView({
                 behavior: 'smooth',
@@ -133,12 +230,14 @@ export default function LiveWorkoutPage() {
 
             const addSetButton =
                 addSetButtonRefs.current[
-                pendingScroll.id
+                    pendingScroll.id
                 ];
+
 
             if (!addSetButton) {
                 return;
             }
+
 
             addSetButton.scrollIntoView({
                 behavior: 'smooth',
@@ -166,12 +265,37 @@ export default function LiveWorkoutPage() {
 
         event.preventDefault();
 
+
         const trimmedName =
             newExerciseName.trim();
 
-        if (!trimmedName) {
+
+        if (trimmedName.length === 0) {
+            setExerciseNameError(
+                'Please insert an exercise name'
+            );
             return;
         }
+
+
+        if (trimmedName.length < 2) {
+            setExerciseNameError(
+                'The exercise name is too short'
+            );
+            return;
+        }
+
+
+        if (trimmedName.length > 60) {
+            setExerciseNameError(
+                'The exercise name is too long'
+            );
+            return;
+        }
+
+
+        setExerciseNameError('');
+
 
         const newExercise = {
             id: crypto.randomUUID(),
@@ -179,14 +303,17 @@ export default function LiveWorkoutPage() {
             sets: []
         };
 
+
         setExpandedExerciseId(
             newExercise.id
         );
+
 
         pendingScrollRef.current = {
             type: 'addSet',
             id: newExercise.id
         };
+
 
         setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
@@ -196,6 +323,7 @@ export default function LiveWorkoutPage() {
                 newExercise
             ]
         }));
+
 
         setNewExerciseName('');
         setIsExerciseFormOpen(false);
@@ -211,10 +339,12 @@ export default function LiveWorkoutPage() {
             completedAt: null
         };
 
+
         pendingScrollRef.current = {
             type: 'set',
             id: newSet.id
         };
+
 
         setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
@@ -229,6 +359,7 @@ export default function LiveWorkoutPage() {
                         ) {
                             return exercise;
                         }
+
 
                         return {
                             ...exercise,
@@ -265,6 +396,7 @@ export default function LiveWorkoutPage() {
                             return exercise;
                         }
 
+
                         return {
                             ...exercise,
 
@@ -277,6 +409,7 @@ export default function LiveWorkoutPage() {
                                     ) {
                                         return set;
                                     }
+
 
                                     return {
                                         ...set,
@@ -301,6 +434,7 @@ export default function LiveWorkoutPage() {
             id: exerciseId
         };
 
+
         setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
 
@@ -315,6 +449,7 @@ export default function LiveWorkoutPage() {
                             return exercise;
                         }
 
+
                         return {
                             ...exercise,
 
@@ -327,6 +462,7 @@ export default function LiveWorkoutPage() {
                                     ) {
                                         return set;
                                     }
+
 
                                     return {
                                         ...set,
@@ -363,6 +499,7 @@ export default function LiveWorkoutPage() {
                             return exercise;
                         }
 
+
                         return {
                             ...exercise,
 
@@ -380,7 +517,7 @@ export default function LiveWorkoutPage() {
 
         if (
             editingSet?.exerciseId ===
-            exerciseId &&
+                exerciseId &&
             editingSet?.setId === setId
         ) {
             setEditingSet(null);
@@ -407,8 +544,8 @@ export default function LiveWorkoutPage() {
         value
     ) {
 
-        setEditingSet(current => ({
-            ...current,
+        setEditingSet(currentSet => ({
+            ...currentSet,
 
             [field]: value
         }));
@@ -420,6 +557,7 @@ export default function LiveWorkoutPage() {
         if (!editingSet) {
             return;
         }
+
 
         setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
@@ -435,6 +573,7 @@ export default function LiveWorkoutPage() {
                             return exercise;
                         }
 
+
                         return {
                             ...exercise,
 
@@ -447,6 +586,7 @@ export default function LiveWorkoutPage() {
                                     ) {
                                         return set;
                                     }
+
 
                                     return {
                                         ...set,
@@ -463,6 +603,7 @@ export default function LiveWorkoutPage() {
                     }
                 )
         }));
+
 
         setEditingSet(null);
     }
@@ -483,14 +624,16 @@ export default function LiveWorkoutPage() {
 
         setLiveWorkout(currentWorkout => {
 
-            const pauseStarted =
+            const pauseStartedAt =
                 new Date(
                     currentWorkout.pausedAt
                 ).getTime();
 
-            const pausedUntilNow =
+
+            const currentPauseDuration =
                 Date.now() -
-                pauseStarted;
+                pauseStartedAt;
+
 
             return {
                 ...currentWorkout,
@@ -500,7 +643,7 @@ export default function LiveWorkoutPage() {
                 totalPausedMilliseconds:
                     currentWorkout
                         .totalPausedMilliseconds +
-                    pausedUntilNow
+                    currentPauseDuration
             };
         });
     }
@@ -514,17 +657,20 @@ export default function LiveWorkoutPage() {
                 currentWorkout
                     .totalPausedMilliseconds;
 
+
             if (currentWorkout.pausedAt) {
 
-                const pauseStarted =
+                const pauseStartedAt =
                     new Date(
                         currentWorkout.pausedAt
                     ).getTime();
 
+
                 totalPausedMilliseconds +=
                     Date.now() -
-                    pauseStarted;
+                    pauseStartedAt;
             }
+
 
             return {
                 ...currentWorkout,
@@ -548,9 +694,10 @@ export default function LiveWorkoutPage() {
             return;
         }
 
+
         setExpandedExerciseId(
-            currentId =>
-                currentId === exerciseId
+            currentExerciseId =>
+                currentExerciseId === exerciseId
                     ? null
                     : exerciseId
         );
@@ -564,13 +711,16 @@ export default function LiveWorkoutPage() {
 
         const { active, over } = event;
 
+
         if (!over) {
             return;
         }
 
+
         if (active.id === over.id) {
             return;
         }
+
 
         setLiveWorkout(currentWorkout => ({
             ...currentWorkout,
@@ -586,19 +736,20 @@ export default function LiveWorkoutPage() {
                             return exercise;
                         }
 
+
                         const oldIndex =
                             exercise.sets.findIndex(
                                 set =>
-                                    set.id ===
-                                    active.id
+                                    set.id === active.id
                             );
+
 
                         const newIndex =
                             exercise.sets.findIndex(
                                 set =>
-                                    set.id ===
-                                    over.id
+                                    set.id === over.id
                             );
+
 
                         if (
                             oldIndex === -1 ||
@@ -606,6 +757,7 @@ export default function LiveWorkoutPage() {
                         ) {
                             return exercise;
                         }
+
 
                         return {
                             ...exercise,
@@ -622,6 +774,211 @@ export default function LiveWorkoutPage() {
     }
 
 
+    function handleExerciseOptions(
+        event,
+        exerciseId
+    ) {
+
+        exerciseOptionsButtonRef.current =
+            event.currentTarget;
+
+
+        if (
+            openExerciseMenu === exerciseId
+        ) {
+            setOpenExerciseMenu(null);
+            setExerciseMenuPosition(null);
+
+            return;
+        }
+
+
+        const buttonRect =
+            event.currentTarget
+                .getBoundingClientRect();
+
+
+        setExerciseMenuPosition({
+            top:
+                buttonRect.bottom + 6,
+
+            right:
+                window.innerWidth -
+                buttonRect.right
+        });
+
+
+        setOpenExerciseMenu(exerciseId);
+    }
+
+
+    function handleDeleteExercise(
+        exerciseId
+    ) {
+
+        setLiveWorkout(currentWorkout => ({
+            ...currentWorkout,
+
+            exercises:
+                currentWorkout.exercises.filter(
+                    exercise =>
+                        exercise.id !==
+                        exerciseId
+                )
+        }));
+
+
+        if (
+            expandedExerciseId ===
+            exerciseId
+        ) {
+            setExpandedExerciseId(null);
+        }
+
+
+        if (
+            editingSet?.exerciseId ===
+            exerciseId
+        ) {
+            setEditingSet(null);
+        }
+
+
+        if (
+            exerciseRename?.exerciseId ===
+            exerciseId
+        ) {
+            setExerciseRename(null);
+        }
+    }
+
+
+    function handleStartExerciseRename(
+        exerciseId
+    ) {
+
+        const exerciseToRename =
+            liveWorkout.exercises.find(
+                exercise =>
+                    exercise.id ===
+                    exerciseId
+            );
+
+
+        if (!exerciseToRename) {
+            return;
+        }
+
+
+        setExerciseRename({
+            exerciseId:
+                exerciseToRename.id,
+
+            draftName:
+                exerciseToRename.name
+        });
+    }
+
+
+    function handleExerciseRenameChange(
+        value
+    ) {
+
+        setExerciseRenameError('')
+
+        setExerciseRename(
+            currentRename => ({
+                ...currentRename,
+
+                draftName: value
+            })
+        );
+    }
+
+
+    function handleSaveExerciseRename() {
+
+        if (!exerciseRename) {
+            return;
+        }
+
+
+        const trimmedName =
+            exerciseRename
+                .draftName
+                .trim();
+
+        if(trimmedName.length < 2){
+            setExerciseRenameError('Exercise name is too short');
+            return;
+        }
+
+        if (
+            trimmedName.length > 60
+        ) {
+            setExerciseRenameError('Exercise name is too long');
+            return;
+        }
+
+
+        setLiveWorkout(currentWorkout => ({
+            ...currentWorkout,
+
+            exercises:
+                currentWorkout.exercises.map(
+                    exercise => {
+
+                        if (
+                            exercise.id !==
+                            exerciseRename.exerciseId
+                        ) {
+                            return exercise;
+                        }
+
+
+                        return {
+                            ...exercise,
+
+                            name: trimmedName
+                        };
+                    }
+                )
+        }));
+
+
+        setExerciseRename(null);
+    }
+
+
+    function handleCancelExerciseRename() {
+
+        setExerciseRename(null);
+    }
+
+
+    function handleExerciseRenameKeyDown(
+        event
+    ) {
+
+        if (event.key === 'Enter') {
+
+            event.preventDefault();
+
+            handleSaveExerciseRename();
+
+            return;
+        }
+
+
+        if (event.key === 'Escape') {
+
+            event.preventDefault();
+
+            handleCancelExerciseRename();
+        }
+    }
+
+
     function formatElapsedTime(
         totalSeconds
     ) {
@@ -631,14 +988,17 @@ export default function LiveWorkoutPage() {
                 totalSeconds / 3600
             );
 
+
         const minutes =
             Math.floor(
                 (totalSeconds % 3600) /
                 60
             );
 
+
         const seconds =
             totalSeconds % 60;
+
 
         return [
             hours,
@@ -659,9 +1019,11 @@ export default function LiveWorkoutPage() {
             return styles.finishedStatus;
         }
 
+
         if (liveWorkout.pausedAt) {
             return styles.pausedStatus;
         }
+
 
         return styles.activeStatus;
     }
@@ -673,9 +1035,11 @@ export default function LiveWorkoutPage() {
             return 'Workout finished';
         }
 
+
         if (liveWorkout.pausedAt) {
             return 'Workout paused';
         }
+
 
         return 'Workout in progress';
     }
@@ -858,6 +1222,7 @@ export default function LiveWorkoutPage() {
                             EXERCISES
                         </p>
 
+
                         {!liveWorkout.endedAt &&
                             !isExerciseFormOpen && (
 
@@ -914,15 +1279,21 @@ export default function LiveWorkoutPage() {
                                                 .pausedAt
                                         )
                                     }
-                                    onChange={event =>
+                                    onChange={event => {
+
+                                        setExerciseNameError(
+                                            ''
+                                        );
+
                                         setNewExerciseName(
                                             event.target
                                                 .value
-                                        )
-                                    }
+                                        );
+                                    }}
                                     placeholder="Exercise name"
                                     autoFocus
                                 />
+
 
                                 <button
                                     type="submit"
@@ -939,12 +1310,17 @@ export default function LiveWorkoutPage() {
                                     Add
                                 </button>
 
+
                                 <button
                                     type="button"
                                     className={
                                         styles.cancelButton
                                     }
                                     onClick={() => {
+
+                                        setExerciseNameError(
+                                            ''
+                                        );
 
                                         setIsExerciseFormOpen(
                                             false
@@ -958,6 +1334,22 @@ export default function LiveWorkoutPage() {
                                     Cancel
                                 </button>
 
+
+                                {exerciseNameError && (
+
+                                    <p
+                                        className={
+                                            styles
+                                                .exerciseNameError
+                                        }
+                                    >
+                                        {
+                                            exerciseNameError
+                                        }
+                                    </p>
+
+                                )}
+
                             </form>
 
                         )}
@@ -969,7 +1361,8 @@ export default function LiveWorkoutPage() {
                         }
                     >
 
-                        {liveWorkout.exercises.length === 0 ? (
+                        {liveWorkout.exercises.length ===
+                        0 ? (
 
                             <p
                                 className={
@@ -998,6 +1391,12 @@ export default function LiveWorkoutPage() {
                                             exercise.id;
 
 
+                                        const isRenaming =
+                                            exerciseRename
+                                                ?.exerciseId ===
+                                            exercise.id;
+
+
                                         const completedSets =
                                             exercise.sets.filter(
                                                 set =>
@@ -1006,7 +1405,9 @@ export default function LiveWorkoutPage() {
 
 
                                         const averageReps =
-                                            completedSets.length > 0
+                                            completedSets.length >
+                                            0
+
                                                 ? completedSets.reduce(
                                                     (
                                                         sum,
@@ -1020,6 +1421,7 @@ export default function LiveWorkoutPage() {
                                                     0
                                                 ) /
                                                 completedSets.length
+
                                                 : null;
 
 
@@ -1032,7 +1434,9 @@ export default function LiveWorkoutPage() {
 
 
                                         const averageWeight =
-                                            weightedSets.length > 0
+                                            weightedSets.length >
+                                            0
+
                                                 ? weightedSets.reduce(
                                                     (
                                                         sum,
@@ -1045,6 +1449,7 @@ export default function LiveWorkoutPage() {
                                                     0
                                                 ) /
                                                 weightedSets.length
+
                                                 : null;
 
 
@@ -1096,60 +1501,176 @@ export default function LiveWorkoutPage() {
                                                                 .exerciseNumber
                                                         }
                                                     >
-                                                        {exerciseIndex +
-                                                            1}
+                                                        {
+                                                            exerciseIndex +
+                                                            1
+                                                        }
                                                     </span>
 
 
-                                                    <h3
+                                                    {isRenaming ? (
+
+                                                        <div
+                                                            className={
+                                                                styles
+                                                                    .exerciseRenameControls
+                                                            }
+                                                            onClick={
+                                                                event =>
+                                                                    event.stopPropagation()
+                                                            }
+                                                        >
+
+                                                            <input
+                                                                type="text"
+                                                                className={
+                                                                    styles
+                                                                        .exerciseRenameInput
+                                                                }
+                                                                value={
+                                                                    exerciseRename
+                                                                        .draftName
+                                                                }
+                                                                onChange={
+                                                                    event =>{
+
+                                                                        handleExerciseRenameChange(
+                                                                            event.target.value
+                                                                        )}
+                                                                }
+                                                                onKeyDown={
+                                                                    handleExerciseRenameKeyDown
+                                                                }
+                                                                autoFocus
+                                                            />
+
+
+                                                            <button
+                                                                type="button"
+                                                                className={
+                                                                    styles
+                                                                        .exerciseRenameSaveButton
+                                                                }
+                                                                aria-label="Save exercise name"
+                                                                title="Save exercise name"
+                                                                onClick={
+                                                                    event => {
+
+                                                                        event.stopPropagation();
+
+                                                                        handleSaveExerciseRename();
+                                                                    }
+                                                                }
+                                                            >
+
+                                                                <img
+                                                                    src={
+                                                                        saveIcon
+                                                                    }
+                                                                    alt=""
+                                                                />
+
+                                                            </button>
+
+                                                            {exerciseRenameError.length !== 0  && (
+                                                                <p className={styles.exerciseRenameError} >{exerciseRenameError}</p>
+                                                            )}
+
+                                                        </div>
+
+                                                    ) : (
+
+                                                        <h3
+                                                            className={
+                                                                styles
+                                                                    .exerciseTitle
+                                                            }
+                                                            title={exercise.name}
+                                                        >
+                                                            {
+                                                                exercise.name
+                                                            }
+                                                        </h3>
+
+                                                    )}
+
+
+                                                    <span
                                                         className={
                                                             styles
-                                                                .exerciseTitle
+                                                                .exerciseSummary
                                                         }
                                                     >
-                                                        {exercise.name}
-                                                    </h3>
 
-
-                                                    <span className={styles.exerciseSummary}>
-
-                                                        {completedSets.length > 0 &&
-                                                            averageReps !== null &&
-                                                            averageWeight !== null && (
+                                                        {completedSets.length >
+                                                            0 &&
+                                                            averageReps !==
+                                                            null &&
+                                                            averageWeight !==
+                                                            null && (
 
                                                                 <span
-                                                                    className={`${styles.averageSummary} ${isExpanded
+                                                                    className={`${styles.averageSummary} ${
+                                                                        isExpanded
                                                                             ? styles.averageSummaryHidden
                                                                             : ''
-                                                                        }`}
+                                                                    }`}
                                                                 >
                                                                     Avg{' '}
-                                                                    {averageReps.toFixed(1)}
+                                                                    {
+                                                                        averageReps.toFixed(
+                                                                            1
+                                                                        )
+                                                                    }
                                                                     {' × '}
-                                                                    {averageWeight.toFixed(1)}
+                                                                    {
+                                                                        averageWeight.toFixed(
+                                                                            1
+                                                                        )
+                                                                    }
                                                                     {' kg'}
 
-                                                                    {totalVolume > 0 && (
-                                                                        <span
-                                                                            className={
-                                                                                styles.summaryDivider
-                                                                            }
-                                                                        >
-                                                                            ·
-                                                                        </span>
-                                                                    )}
+
+                                                                    {totalVolume >
+                                                                        0 && (
+
+                                                                            <span
+                                                                                className={
+                                                                                    styles
+                                                                                        .summaryDivider
+                                                                                }
+                                                                            >
+                                                                                ·
+                                                                            </span>
+
+                                                                        )}
+
                                                                 </span>
 
                                                             )}
 
-                                                        {totalVolume > 0 && (
-                                                            <span className={styles.volumeSummary}>
-                                                                {Math.round(
-                                                                    totalVolume
-                                                                ).toLocaleString()}
-                                                                {' kg volume'}
-                                                            </span>
-                                                        )}
+
+                                                        {totalVolume >
+                                                            0 && (
+
+                                                                <span
+                                                                    className={
+                                                                        styles
+                                                                            .volumeSummary
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        Math.round(
+                                                                            totalVolume
+                                                                        )
+                                                                            .toLocaleString()
+                                                                    }
+                                                                    {
+                                                                        ' kg volume'
+                                                                    }
+                                                                </span>
+
+                                                            )}
 
                                                     </span>
 
@@ -1160,6 +1681,7 @@ export default function LiveWorkoutPage() {
                                                                 .setCount
                                                         }
                                                     >
+
                                                         {
                                                             exercise
                                                                 .sets
@@ -1169,9 +1691,10 @@ export default function LiveWorkoutPage() {
                                                         {exercise
                                                             .sets
                                                             .length ===
-                                                            1
+                                                        1
                                                             ? 'set'
                                                             : 'sets'}
+
                                                     </span>
 
 
@@ -1194,21 +1717,24 @@ export default function LiveWorkoutPage() {
                                                                 ? 'Collapse exercise'
                                                                 : 'Expand exercise'
                                                         }
-                                                        onClick={event => {
+                                                        onClick={
+                                                            event => {
 
-                                                            event.stopPropagation();
+                                                                event.stopPropagation();
 
-                                                            handleToggleExercise(
-                                                                exercise.id
-                                                            );
-                                                        }}
+                                                                handleToggleExercise(
+                                                                    exercise.id
+                                                                );
+                                                            }
+                                                        }
                                                     >
 
                                                         <span
-                                                            className={`${styles.exerciseChevron} ${isExpanded
-                                                                ? styles.exerciseChevronExpanded
-                                                                : ''
-                                                                }`}
+                                                            className={`${styles.exerciseChevron} ${
+                                                                isExpanded
+                                                                    ? styles.exerciseChevronExpanded
+                                                                    : ''
+                                                            }`}
                                                         >
 
                                                             <img
@@ -1222,14 +1748,55 @@ export default function LiveWorkoutPage() {
 
                                                     </button>
 
+
+                                                    <div
+                                                        className={
+                                                            styles
+                                                                .exerciseOptionsWrapper
+                                                        }
+                                                    >
+
+                                                        <button
+                                                            type="button"
+                                                            className={
+                                                                styles
+                                                                    .exerciseOptionsButton
+                                                            }
+                                                            aria-label="Exercise options"
+                                                            title="Exercise options"
+                                                            onClick={
+                                                                event => {
+
+                                                                    event.stopPropagation();
+
+                                                                    handleExerciseOptions(
+                                                                        event,
+                                                                        exercise.id
+                                                                    );
+                                                                }
+                                                            }
+                                                        >
+
+                                                            <img
+                                                                src={
+                                                                    moreIcon
+                                                                }
+                                                                alt=""
+                                                            />
+
+                                                        </button>
+
+                                                    </div>
+
                                                 </div>
 
 
                                                 <div
-                                                    className={`${styles.exerciseContent} ${isExpanded
-                                                        ? styles.exerciseContentExpanded
-                                                        : ''
-                                                        }`}
+                                                    className={`${styles.exerciseContent} ${
+                                                        isExpanded
+                                                            ? styles.exerciseContentExpanded
+                                                            : ''
+                                                    }`}
                                                     aria-hidden={
                                                         !isExpanded
                                                     }
@@ -1243,7 +1810,7 @@ export default function LiveWorkoutPage() {
                                                     >
 
                                                         {exercise.sets.length ===
-                                                            0 ? (
+                                                        0 ? (
 
                                                             <p
                                                                 className={
@@ -1293,10 +1860,12 @@ export default function LiveWorkoutPage() {
                                                                 >
 
                                                                     <SortableContext
-                                                                        items={exercise.sets.map(
-                                                                            set =>
-                                                                                set.id
-                                                                        )}
+                                                                        items={
+                                                                            exercise.sets.map(
+                                                                                set =>
+                                                                                    set.id
+                                                                            )
+                                                                        }
                                                                         strategy={
                                                                             verticalListSortingStrategy
                                                                         }
@@ -1378,14 +1947,11 @@ export default function LiveWorkoutPage() {
                                                                         if (
                                                                             element
                                                                         ) {
-
                                                                             addSetButtonRefs.current[
                                                                                 exercise.id
                                                                             ] =
                                                                                 element;
-
                                                                         } else {
-
                                                                             delete addSetButtonRefs.current[
                                                                                 exercise.id
                                                                             ];
@@ -1488,6 +2054,94 @@ export default function LiveWorkoutPage() {
                 </section>
 
             )}
+
+
+            {openExerciseMenu !== null &&
+                exerciseMenuPosition &&
+                createPortal(
+
+                    <div
+                        ref={
+                            exerciseMenuRef
+                        }
+                        className={
+                            styles.exerciseMenu
+                        }
+                        style={{
+                            top:
+                                exerciseMenuPosition.top,
+
+                            right:
+                                exerciseMenuPosition.right
+                        }}
+                    >
+
+                        <button
+                            type="button"
+                            onClick={
+                                event => {
+
+                                    event.stopPropagation();
+
+
+                                    const exerciseId =
+                                        openExerciseMenu;
+
+
+                                    setOpenExerciseMenu(
+                                        null
+                                    );
+
+                                    setExerciseMenuPosition(
+                                        null
+                                    );
+
+
+                                    handleStartExerciseRename(
+                                        exerciseId
+                                    );
+                                }
+                            }
+                        >
+                            Rename
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onClick={
+                                event => {
+
+                                    event.stopPropagation();
+
+
+                                    const exerciseId =
+                                        openExerciseMenu;
+
+
+                                    setOpenExerciseMenu(
+                                        null
+                                    );
+
+                                    setExerciseMenuPosition(
+                                        null
+                                    );
+
+
+                                    handleDeleteExercise(
+                                        exerciseId
+                                    );
+                                }
+                            }
+                        >
+                            Delete
+                        </button>
+
+                    </div>,
+
+                    document.body
+                )
+            }
 
         </main>
     );
