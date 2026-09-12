@@ -1,0 +1,434 @@
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background-color:
+        rgba(15, 23, 42, 0.22);
+}
+
+
+.modalCard {
+    width: 100%;
+    max-width: 340px;
+
+    padding: 22px;
+
+    border: 1px solid #d7dce2;
+    border-radius: 14px;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 12px 32px
+        rgba(15, 23, 42, 0.12);
+}
+
+
+/* HEADER */
+
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    padding-bottom: 18px;
+
+    border-bottom:
+        1px solid #e5e7eb;
+}
+
+
+.headerText {
+    min-width: 0;
+}
+
+
+.modalTitle {
+    margin: 0;
+
+    font-size: 22px;
+    line-height: 1.25;
+    font-weight: 700;
+
+    color: #20242a;
+}
+
+
+.modalDescription {
+    margin: 6px 0 0;
+
+    font-size: 13px;
+    line-height: 1.5;
+
+    color: #7c8798;
+}
+
+
+.closeButton {
+    flex: 0 0 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 5px;
+
+    background: transparent;
+    color: #7c8798;
+
+    font-size: 24px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+
+.closeButton:hover {
+    background-color: #f3f4f6;
+    color: #20242a;
+}
+
+
+/* SECTIONS */
+
+.modalSection {
+    padding: 20px 0;
+
+    border-bottom:
+        1px solid #e5e7eb;
+}
+
+
+.sectionTitle {
+    margin: 0;
+
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 600;
+
+    color: #252a31;
+}
+
+
+.sectionPrompt {
+    margin: 4px 0 12px;
+
+    font-size: 12px;
+    line-height: 1.45;
+
+    color: #7c8798;
+}
+
+
+/* MUSCLE GROUPS */
+
+.muscleGroupList {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+
+.muscleGroupChip {
+    min-height: 34px;
+
+    padding: 0 13px;
+
+    border: 1px solid #d8dee6;
+    border-radius: 999px;
+
+    background-color: #f8fafc;
+    color: #374151;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+
+.muscleGroupChip:hover {
+    border-color: #16a34a;
+
+    background-color: #f0fdf4;
+}
+
+
+.muscleGroupChipSelected {
+    border-color: #86c995;
+
+    background-color: #eef8f0;
+    color: #15803d;
+}
+
+
+/* INTENSITY */
+
+.intensityControl {
+    width: 220px;
+    max-width: 100%;
+}
+
+
+.intensityFires {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+.intensityFireButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 42px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+
+.intensityFireButton span {
+    display: block;
+
+    font-size: 29px;
+    line-height: 1;
+
+    transition:
+        opacity 120ms ease,
+        filter 120ms ease,
+        transform 120ms ease;
+}
+
+
+.intensityFireButton:hover span,
+.intensityFireButton:focus-visible span {
+    transform:
+        translateY(-2px);
+}
+
+
+.fireActive {
+    opacity: 1;
+
+    filter: none;
+}
+
+
+.fireInactive {
+    opacity: 0.13;
+
+    filter: grayscale(1);
+}
+
+
+.intensityScale {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 7px;
+
+    margin-top: 2px;
+
+    font-size: 12px;
+    line-height: 1.3;
+
+    color: #697386;
+}
+
+
+/* ERROR */
+
+.formError {
+    margin: 12px 0 0;
+
+    font-size: 11px;
+    line-height: 1.3;
+
+    color: #dc2626;
+}
+
+
+/* ACTIONS */
+
+.modalActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    padding-top: 18px;
+}
+
+
+.cancelButton,
+.finishButton {
+    height: 38px;
+
+    padding: 0 15px;
+
+    border-radius: 7px;
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+
+.cancelButton {
+    border: 1px solid #d7dce2;
+
+    background-color: #ffffff;
+    color: #4b5563;
+}
+
+
+.cancelButton:hover {
+    background-color: #f9fafb;
+}
+
+
+.finishButton {
+    border: none;
+
+    background-color: #16a34a;
+    color: #ffffff;
+}
+
+
+.finishButton:hover {
+    background-color: #15803d;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 430px) {
+
+    .modalOverlay {
+        padding: 14px;
+    }
+
+
+    .modalCard {
+        max-width: 100%;
+
+        padding: 20px;
+    }
+
+
+    .modalTitle {
+        font-size: 20px;
+    }
+
+
+    .modalDescription {
+        font-size: 12px;
+    }
+
+
+    .sectionTitle {
+        font-size: 15px;
+    }
+
+
+    .muscleGroupChip {
+        min-height: 32px;
+
+        padding: 0 11px;
+
+        font-size: 13px;
+    }
+
+
+    .intensityControl {
+        width: 210px;
+    }
+
+
+    .intensityFireButton {
+        width: 33px;
+        height: 39px;
+    }
+
+
+    .intensityFireButton span {
+        font-size: 26px;
+    }
+
+
+    .modalActions {
+        display: grid;
+
+        grid-template-columns:
+            1fr
+            1fr;
+
+        gap: 8px;
+    }
+
+
+    .cancelButton,
+    .finishButton {
+        width: 100%;
+    }
+}
+
+
+/* REDUCED MOTION */
+
+@media (
+    prefers-reduced-motion: reduce
+) {
+
+    .closeButton,
+    .muscleGroupChip,
+    .intensityFireButton span,
+    .cancelButton,
+    .finishButton {
+        transition: none;
+    }
+}
